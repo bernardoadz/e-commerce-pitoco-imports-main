@@ -7,7 +7,7 @@ const categoryItems = [
     id: "conjuntos", 
     label: "Conjuntos", 
     icon: Layers,
-    description: "Tech Fleece & Sportswear",
+    description: "Marcas Premium & Streetwear",
     gradient: "from-blue-500/20 to-cyan-500/20"
   },
   { 
@@ -46,10 +46,10 @@ const categoryItems = [
     gradient: "from-slate-500/20 to-gray-500/20"
   },
   { 
-    id: "futsal", 
-    label: "Futsal", 
+    id: "esportes", 
+    label: "Esportes", 
     icon: Zap,
-    description: "Indoor Performance",
+    description: "Performance Esportiva",
     gradient: "from-red-500/20 to-orange-500/20"
   },
 ]

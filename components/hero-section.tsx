@@ -60,23 +60,8 @@ export function HeroSection() {
               CONJUNTOS EM DESTAQUE
             </Button>
           </Link>
-        </div>
-
-        {/* Stats */}
-        <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
-          {[
-            { value: "500+", label: "Produtos" },
-            { value: "15k+", label: "Clientes" },
-            { value: "4.9", label: "Avaliação" },
-            { value: "24h", label: "Entrega" },
-          ].map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-foreground">{stat.value}</div>
-              <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+       </div>
+    </div>
 
       {/* Scroll Indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground">
