@@ -6,14 +6,16 @@ import type { Product } from "./products"
 export interface CartItem {
   product: Product
   size: string
+  color: string 
+  image: string // ADICIONADO: Para guardar a foto exata da cor escolhida
   quantity: number
 }
 
 interface CartContextType {
   items: CartItem[]
-  addItem: (product: Product, size: string) => void
-  removeItem: (productId: string, size: string) => void
-  updateQuantity: (productId: string, size: string, quantity: number) => void
+  addItem: (product: Product, size: string, color: string, image: string) => void 
+  removeItem: (productId: string, size: string, color: string) => void 
+  updateQuantity: (productId: string, size: string, color: string, quantity: number) => void 
   clearCart: () => void
   totalItems: number
   totalPrice: number
@@ -24,9 +26,6 @@ const CartContext = createContext<CartContextType | null>(null)
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
 
-  // --- O SEGREDO ESTÁ AQUI: PERSISTÊNCIA ---
-  
-  // 1. Carrega os itens do navegador quando o site abre
   useEffect(() => {
     const savedCart = localStorage.getItem("pitoco-cart")
     if (savedCart) {
@@ -38,17 +37,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // 2. Salva os itens no navegador toda vez que o carrinho muda
   useEffect(() => {
     localStorage.setItem("pitoco-cart", JSON.stringify(items))
   }, [items])
 
-  // ------------------------------------------
-
-  const addItem = useCallback((product: Product, size: string) => {
+  const addItem = useCallback((product: Product, size: string, color: string, image: string) => {
     setItems(prev => {
+      // Verifica se já existe o mesmo produto, tamanho E cor
       const existingIndex = prev.findIndex(
-        item => item.product.id === product.id && item.size === size
+        item => item.product.id === product.id && item.size === size && item.color === color
       )
 
       if (existingIndex > -1) {
@@ -57,24 +54,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return updated
       }
 
-      return [...prev, { product, size, quantity: 1 }]
+      // Salva o item com a imagem específica da cor selecionada
+      return [...prev, { product, size, color, image, quantity: 1 }]
     })
   }, [])
 
-  const removeItem = useCallback((productId: string, size: string) => {
+  const removeItem = useCallback((productId: string, size: string, color: string) => {
     setItems(prev => prev.filter(
-      item => !(item.product.id === productId && item.size === size)
+      item => !(item.product.id === productId && item.size === size && item.color === color)
     ))
   }, [])
 
-  const updateQuantity = useCallback((productId: string, size: string, quantity: number) => {
+  const updateQuantity = useCallback((productId: string, size: string, color: string, quantity: number) => {
     if (quantity <= 0) {
-      removeItem(productId, size)
+      removeItem(productId, size, color)
       return
     }
 
     setItems(prev => prev.map(item => 
-      item.product.id === productId && item.size === size
+      item.product.id === productId && item.size === size && item.color === color
         ? { ...item, quantity }
         : item
     ))

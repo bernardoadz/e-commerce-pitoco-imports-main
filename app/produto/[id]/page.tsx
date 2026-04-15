@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { use } from "react"
 import Image from "next/image"
 import Link from "next/link"
@@ -10,7 +10,6 @@ import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { ProductCard } from "@/components/product-card"
 import { Button } from "@/components/ui/button"
-// Removido o CartProvider daqui
 import { useCart } from "@/lib/cart-context"
 import { getProductById, products, formatPrice, type Product } from "@/lib/products"
 import { cn } from "@/lib/utils"
@@ -27,16 +26,22 @@ export default function ProductPage({ params }: ProductPageProps) {
     notFound()
   }
 
-  // Removido o <CartProvider> daqui, pois ele já está no layout.tsx
   return <ProductPageContent product={product} />
 }
 
 function ProductPageContent({ product }: { product: Product }) {
   const { addItem } = useCart()
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
-  const [selectedImage, setSelectedImage] = useState(0)
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [addedToCart, setAddedToCart] = useState(false)
+
+  // Identifica a variante (cor) baseada na imagem que está na tela
+  const selectedVariant = useMemo(() => {
+    if (!product.variants) return null
+    const currentImageUrl = product.images[selectedImageIndex]
+    return product.variants.find(v => v.imageUrl === currentImageUrl) || null
+  }, [product.variants, product.images, selectedImageIndex])
 
   const relatedProducts = products
     .filter(p => p.category === product.category && p.id !== product.id)
@@ -45,9 +50,15 @@ function ProductPageContent({ product }: { product: Product }) {
   const handleAddToCart = () => {
     if (!selectedSize) return
     
+    // Captura a cor e a imagem atual para salvar no carrinho
+    const colorName = selectedVariant?.colorName || "Padrão"
+    const colorImage = product.images[selectedImageIndex]
+    
     for (let i = 0; i < quantity; i++) {
-      addItem(product, selectedSize)
+      // Agora enviamos 4 argumentos: produto, tamanho, cor e imagem
+      addItem(product, selectedSize, colorName, colorImage)
     }
+    
     setAddedToCart(true)
     setTimeout(() => setAddedToCart(false), 2000)
   }
@@ -55,8 +66,9 @@ function ProductPageContent({ product }: { product: Product }) {
   const handleBuyNow = () => {
     if (!selectedSize) return
     
+    const colorText = selectedVariant ? `, Cor: ${selectedVariant.colorName}` : ""
     const message = encodeURIComponent(
-      `Olá Pitoco! Gostaria de encomendar o ${product.name}, Tamanho: ${selectedSize}. Valor: ${formatPrice(product.price * quantity)}.`
+      `Olá Pitoco! Gostaria de encomendar o ${product.name}${colorText}, Tamanho: ${selectedSize}. Valor: ${formatPrice(product.price * quantity)}.`
     )
     window.open(`https://wa.me/5511917932009?text=${message}`, "_blank")
   }
@@ -67,7 +79,6 @@ function ProductPageContent({ product }: { product: Product }) {
       
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4">
-          {/* Breadcrumb */}
           <Link 
             href="/catalogo" 
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
@@ -76,13 +87,12 @@ function ProductPageContent({ product }: { product: Product }) {
             Voltar ao Catálogo
           </Link>
 
-          {/* Product Content */}
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-            {/* Image Gallery */}
+            {/* Galeria de Imagens */}
             <div className="space-y-4">
               <div className="relative aspect-square rounded-2xl overflow-hidden bg-secondary">
                 <Image
-                  src={product.images[selectedImage]}
+                  src={product.images[selectedImageIndex]}
                   alt={product.name}
                   fill
                   className="object-cover"
@@ -105,21 +115,21 @@ function ProductPageContent({ product }: { product: Product }) {
               </div>
 
               {product.images.length > 1 && (
-                <div className="flex gap-3">
+                <div className="flex gap-3 overflow-x-auto pb-2">
                   {product.images.map((image, index) => (
                     <button
                       key={index}
-                      onClick={() => setSelectedImage(index)}
+                      onClick={() => setSelectedImageIndex(index)}
                       className={cn(
-                        "relative w-20 h-20 rounded-lg overflow-hidden bg-secondary transition-all",
-                        selectedImage === index 
+                        "relative w-20 h-20 rounded-lg overflow-hidden bg-secondary transition-all shrink-0",
+                        selectedImageIndex === index 
                           ? "ring-2 ring-primary ring-offset-2 ring-offset-background" 
                           : "opacity-60 hover:opacity-100"
                       )}
                     >
                       <Image
                         src={image}
-                        alt={`${product.name} - Imagem ${index + 1}`}
+                        alt={`${product.name} - Opção ${index + 1}`}
                         fill
                         className="object-cover"
                         sizes="80px"
@@ -130,10 +140,16 @@ function ProductPageContent({ product }: { product: Product }) {
               )}
             </div>
 
-            {/* Product Info */}
+            {/* Informações do Produto */}
             <div className="lg:py-4">
               <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-4">
                 {product.name}
+                {/* Mostra a cor no título se houver uma variante selecionada */}
+                {selectedVariant && (
+                  <span className="text-primary block text-xl md:text-2xl mt-1">
+                    {selectedVariant.colorName}
+                  </span>
+                )}
               </h1>
 
               <p className="text-muted-foreground mb-6 leading-relaxed">
@@ -145,10 +161,11 @@ function ProductPageContent({ product }: { product: Product }) {
                   {formatPrice(product.price)}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  ou 3x de {formatPrice(product.price / 3)} sem juros
+                
                 </p>
               </div>
 
+              {/* Tamanhos */}
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-3">
                   <span className="font-medium text-foreground">Tamanho</span>
@@ -174,6 +191,7 @@ function ProductPageContent({ product }: { product: Product }) {
                 </div>
               </div>
 
+              {/* Quantidade */}
               <div className="mb-8">
                 <span className="font-medium text-foreground mb-3 block">Quantidade</span>
                 <div className="flex items-center gap-3">
@@ -199,6 +217,7 @@ function ProductPageContent({ product }: { product: Product }) {
                 </div>
               </div>
 
+              {/* Botões */}
               <div className="flex flex-col sm:flex-row gap-3 mb-8">
                 <Button
                   variant="outline"

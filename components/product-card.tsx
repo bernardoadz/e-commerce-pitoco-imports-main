@@ -60,7 +60,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           {formatPrice(product.price)}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          ou 3x de {formatPrice(product.price / 3)}
+        
         </p>
       </div>
     </Link>

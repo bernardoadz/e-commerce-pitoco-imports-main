@@ -6,11 +6,10 @@ import { ArrowLeft, MessageCircle, Minus, Plus, ShoppingBag, Trash2 } from "luci
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
-import { useCart } from "@/lib/cart-context" // Removido o CartProvider daqui
+import { useCart } from "@/lib/cart-context"
 import { formatPrice } from "@/lib/products"
 
 export default function CarrinhoPage() {
-  // Removido o <CartProvider> daqui de dentro, pois ele já está no layout.tsx
   return <CarrinhoContent />
 }
 
@@ -20,8 +19,9 @@ function CarrinhoContent() {
   const handleCheckout = () => {
     if (items.length === 0) return
     
+    // Agora inclui a COR na mensagem do WhatsApp
     const orderItems = items.map(item => 
-      `- ${item.product.name} (Tam: ${item.size}) x${item.quantity} = ${formatPrice(item.product.price * item.quantity)}`
+      `- ${item.product.name} (Cor: ${item.color}, Tam: ${item.size}) x${item.quantity} = ${formatPrice(item.product.price * item.quantity)}`
     ).join('\n')
 
     const message = encodeURIComponent(
@@ -69,14 +69,14 @@ function CarrinhoContent() {
               <div className="lg:col-span-2 space-y-4">
                 {items.map((item) => (
                   <div 
-                    key={`${item.product.id}-${item.size}`}
+                    key={`${item.product.id}-${item.size}-${item.color}`} // Chave única por Cor também
                     className="flex gap-4 p-4 rounded-xl bg-card border border-border"
                   >
-                    {/* Image */}
+                    {/* Image - Agora usa item.image que salvamos no contexto */}
                     <Link href={`/produto/${item.product.id}`}>
                       <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-secondary shrink-0">
                         <Image
-                          src={item.product.images[0]}
+                          src={item.image} // MUDANÇA: Agora pega a foto da cor escolhida
                           alt={item.product.name}
                           fill
                           className="object-cover"
@@ -92,9 +92,14 @@ function CarrinhoContent() {
                           {item.product.name}
                         </h3>
                       </Link>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Tamanho: {item.size}
-                      </p>
+                      <div className="flex flex-col gap-0.5 mt-1">
+                        <p className="text-sm text-primary font-medium">
+                          Cor: {item.color}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Tamanho: {item.size}
+                        </p>
+                      </div>
                       <p className="text-lg font-bold text-primary mt-2">
                         {formatPrice(item.product.price)}
                       </p>
@@ -106,7 +111,7 @@ function CarrinhoContent() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => removeItem(item.product.id, item.size)}
+                        onClick={() => removeItem(item.product.id, item.size, item.color)} // MUDANÇA: Passa a cor para remover o item certo
                       >
                         <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Remover</span>
@@ -117,7 +122,7 @@ function CarrinhoContent() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 rounded-r-none"
-                          onClick={() => updateQuantity(item.product.id, item.size, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.product.id, item.size, item.color, item.quantity - 1)} // MUDANÇA: Passa a cor
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
@@ -128,7 +133,7 @@ function CarrinhoContent() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 rounded-l-none"
-                          onClick={() => updateQuantity(item.product.id, item.size, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.product.id, item.size, item.color, item.quantity + 1)} // MUDANÇA: Passa a cor
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
